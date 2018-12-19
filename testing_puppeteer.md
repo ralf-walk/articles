@@ -123,7 +123,7 @@ afterAll(async () => {
 ```
 
 
-## Conclusion and Suggestions
+## Conclusion and suggestions
 Angular testing is great and I was a big fan of it for a long time. But it has its drawbacks and I encounter often that
 projects are relying on a big mock infrastructure to isolate their components and make them Unit testable. The mocks by itself must be maintained and kept in sync with the current implementation.
 This makes the code more difficult to refactor and you cannot rely on your test after refactoring the code. They are just testing the current working snapshot of your code.
