@@ -8,20 +8,20 @@ In this Article I will show you another way of testing your UI Application with 
 Although I personally use Angular in this article, all the Puppeteer examples and the message are valid for other UI frameworks as well.
 It just pretends, that your UI can be run on Chrome/Chromium.
 
-## The testing Pyramid
+## The Test Pyramid
 
 To get an Overview where Puppeteer might help you testing your UI application, lets take a quick look
-at the well known testing Pyramid.
+at the well known Test Pyramid.
 
-![Testing Pyramid](512px-Testing_Pyramid.svg.png)
+![Test Pyramid](512px-Testing_Pyramid.svg.png)
 
 The message usually is:
 * Cover most parts of your application with unit tests
-* Write lesser Integration-Tests
+* Write lesser integration tests
 * Only if not already covered by the former tests, start writing some E2E/UI Tests
 
-I think the disadvantages of the testing Pyramid shown above are:
-1. They usually make no difference between UI and E2E tests. But for me that are two different things.
+I think the disadvantages of the Test Pyramid shown above are:
+1. They usually make no difference between UI and E2E tests. But for me they are two different things.
 2. There is too much focus on writing unit tests. But there are other ways to smarter test your application with less effort.
 
 ## The difference between E2E and UI Tests
@@ -45,7 +45,7 @@ But why not always write unit tests?
 * As result of this hard alignment to the code refactoring becomes cumberstone. Be honest, most tests fail because of refactoring existing code or developing new features (forgot the mock huh?). You have to rewrite them, change them, adjust the mocks you are using etc. This leads to the following drawback.
 * Who tells you after code refactorings that the application works as before when you to modify big parts of the tests? What value they give to you?
 
-I totally agree with this. But I think there is a way to combine the advantages without having too much of the disadvantages shown above in using UI tests.
+I think there is a way to combine the advantages without having too much of the disadvantages shown above in using UI tests.
 
 ## Puppeteer to the rescue
 
@@ -77,14 +77,14 @@ page.on('request', async request => {
 });
 ```
 
-You are now able to run your application in abscense of any backend system and can control the responses from the requests your UI ist sending.
-This enables to completly UI test your application with Pupperteer. I used [Jest](https://jestjs.io/) as my testing framework.
+You are now able to run your application in absence of any backend system and can control the responses from the requests your UI ist sending.
+This enables to completely UI test your application with Puppeteer. I used [Jest](https://jestjs.io/) as my testing framework.
 
 ## Comparing Puppeteers UI-Tests with unit tests
-* UI tests are written on a highler level than unit tests. This makes them more robust to refactorings. You could just swap your current UI framework from e.g. Angular to Vue or Flex and the tests will still run, pretending the selectors you are using are kept stable.
+* UI tests are written on a higher level than unit tests. This makes them more robust to refactorings. You could just swap your current UI framework from e.g. Angular to Vue or Flex and the tests will still run, pretending the selectors you are using are kept stable.
 * Therefore you can rely on your test suite after finished your code refactorings. If all tests run green you know that the application behaves as before.
 * You don't need to write and maintain a mock infrastructure. In most cases it is sufficient to just mock your browsers XHR-Request to the backend services. But with Puppeteer you can even control more parts of your browser if that isn't enough.
-* UI tests written in Puppeteer are usually very stable and fast, compareable to unit tests.
+* UI tests written in Puppeteer are usually very stable and fast, comparable to unit tests.
 
 
 ### Run Puppeteer on a CI-Server (like Jenkins)
@@ -92,16 +92,17 @@ This enables to completly UI test your application with Pupperteer. I used [Jest
 To actually run a Jest/Puppeteer session on your favorite UI server you have a couple of opportunities.
 For me it made sense to first build the project to just have all static content in one folder. In case of Angular `npm run build` or `ng serve` will do the trick leaving all the transpiled source files and other files in the `/dist` folder.
 
-Having all your required files ready to deliver in the `dist` folder you can setup a webserver of your choice
-to serve the static contents for Jest/Puppeteer to run their tests on top of it.
+Having all your required files ready to deliver in the `dist` folder you can setup a webserver of your choice to serve the static contents for Jest/Puppeteer to run their tests on top of it.
 
 The webserver I use is express. The difficulty is to actually stop express but there are some libraries to help you. [Stoppable](https://www.npmjs.com/package/stoppable) uses a wrapper around the HttpServer instance to implement the `close()` function.
 
-Installation:
+To install express (with stoppable) just execute the following.
 
 ```
 npm i express stoppable --save-dev
 ```
+
+Now you need to setup and start your instance of express from code.
 
 ```javascript
 const express = require('express');
@@ -116,10 +117,18 @@ async function createServer(port) {
 }
 ```
 
-Somewhere in your Jest Callback you could have:
+To use the `createServer()` function you can just hang into Jests `beforeAll()` and `afterAll()` callback functions.
 
 ```javascript
 let server;
+
+async function createServer(port) {
+  const app = express();
+  app.use(express.static('dist'));
+  return new Promise((resolve, reject) => {
+    const server = app.listen(port, () => resolve(stoppable(server)));
+  });
+}
 
 beforeAll(async () => {
   server = await createServer(4200);
@@ -132,18 +141,17 @@ afterAll(async () => {
 
 
 ## Conclusion and suggestions
-Angular testing is great and I was a big fan of it for a long time. But it has its drawbacks and I encounter often that
-projects are relying on a big mock infrastructure to isolate their components and make them unit testable. The mocks by itself must be maintained and kept in sync with the current implementation.
+Angular testing is great and I was a big fan of it for a long time. But it has its drawbacks and I encounter often that projects are relying on a big mock infrastructure to isolate their components and make them unit testable. The mocks by itself must be maintained and kept in sync with the current implementation.
 This makes the code more difficult to refactor and you cannot rely on your test after refactoring the code. They are just testing the current working snapshot of your code.
 
 Much of the testing afford can now be done with UI testing using Puppeteer. You test your code at a higher level being more robust to refactorings.
 Of course you loose the ability to explicitly white box test functions. But there is no one permitting you from writing them.
 
-So, my suggestion is to be pragmatic. Carefully adjust your testing efford to the following aspects:
+So, my suggestion is to be pragmatic. Carefully adjust your testing afford to the following aspects:
   * How big is the team actually writing the UI part of your application?
   * How much impact and number of users the application have?
   * How fast will you develope your app and hit the marked? Do you need a near 100% unit test coverage if you are not sure whether your application will survive (MVP approach)?
   * What is the TTL of your application in today's fast changing world?
   * How much is the code refactored / stability of the code base (-> More UI-Tests, less unit tests)?
 
-As such I don't like to generalise the Test Pyramid on each project.
+As such I don't like to generalize the Test Pyramid on each project.
